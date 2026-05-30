@@ -1,0 +1,260 @@
+// prisma/schema.prisma
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ───────────────────────────────────────────────────
+// EMPLOYEES (Internal ELMS Users)
+// ───────────────────────────────────────────────────
+model Employee {
+  id           String       @id @default(cuid())
+  email        String       @unique
+  passwordHash String
+  fullName     String
+  role         EmployeeRole
+  isActive     Boolean      @default(true)
+  createdAt    DateTime     @default(now())
+  updatedAt    DateTime     @updatedAt
+
+  // Relations
+  dispatches Dispatch[] @relation("CreatedBy")
+  auditLogs  AuditLog[]
+  sessions   Session[]
+
+  @@index([email])
+}
+
+enum EmployeeRole {
+  SUPER_ADMIN
+  LOGISTICS_MANAGER
+  DISPATCH_EXECUTIVE
+  WAREHOUSE_STAFF
+  VIEWER_AUDITOR
+}
+
+// ───────────────────────────────────────────────────
+// STUDENTS
+// ───────────────────────────────────────────────────
+model Student {
+  id             String        @id
+  name           String
+  mobile         String
+  email          String?
+  address        String
+  city           String
+  state          String
+  pincode        String
+  courseId       String
+  centerId       String
+  batchId        String?
+  enrollmentDate DateTime
+  status         StudentStatus
+  paymentPlanId  String
+  notes          String?
+  importedAt     DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+
+  course          Course            @relation(fields: [courseId], references: [id])
+  center          Center            @relation(fields: [centerId], references: [id])
+  paymentPlan     PaymentPlan       @relation(fields: [paymentPlanId], references: [id])
+  dispatches      Dispatch[]
+  transfers       Transfer[]
+  notifications   NotificationLog[]
+  milestoneStatus MilestoneStatus[]
+
+  @@index([mobile])
+  @@index([courseId, status])
+  @@index([state, pincode])
+}
+
+enum StudentStatus {
+  ACTIVE
+  TRANSFERRED
+  DROPPED
+  COMPLETED
+  HOLD
+}
+
+// ───────────────────────────────────────────────────
+// PAYMENT MILESTONES
+// ───────────────────────────────────────────────────
+model MilestoneStatus {
+  id              String    @id @default(cuid())
+  studentId       String
+  milestoneNumber Int
+  amount          Decimal   @db.Decimal(10, 2)
+  paid            Boolean   @default(false)
+  paidAt          DateTime?
+  syncedFromERP   DateTime?
+
+  student Student @relation(fields: [studentId], references: [id])
+
+  @@unique([studentId, milestoneNumber])
+  @@index([studentId, paid])
+}
+
+// ───────────────────────────────────────────────────
+// DISPATCH
+// ───────────────────────────────────────────────────
+model Dispatch {
+  id               String         @id @default(cuid())
+  studentId        String
+  kitId            String
+  status           DispatchStatus
+  deliveryMode     DeliveryMode
+  courierPartnerId String?
+  awbNumber        String?
+  expectedDispatch DateTime?
+  expectedDelivery DateTime?
+  dispatchedAt     DateTime?
+  deliveredAt      DateTime?
+  createdById      String
+  overrideReason   String?
+  createdAt        DateTime       @default(now())
+  updatedAt        DateTime       @updatedAt
+
+  student         Student         @relation(fields: [studentId], references: [id])
+  kit             Kit             @relation(fields: [kitId], references: [id])
+  courierPartner  CourierPartner? @relation(fields: [courierPartnerId], references: [id])
+  createdBy       Employee        @relation("CreatedBy", fields: [createdById], references: [id])
+  trackingHistory TrackingEvent[]
+
+  @@index([status, createdAt])
+  @@index([studentId, status])
+}
+
+enum DispatchStatus {
+  QUEUED
+  ADDRESS_FLAGGED
+  HOLD
+  PACKED
+  HANDED_TO_COURIER
+  IN_TRANSIT
+  OUT_FOR_DELIVERY
+  DELIVERED
+  FAILED_DELIVERY
+  RTO_INITIATED
+  RETURNED
+}
+
+// ───────────────────────────────────────────────────
+// AUDIT LOG
+// ───────────────────────────────────────────────────
+model AuditLog {
+  id         BigInt   @id @default(autoincrement())
+  employeeId String
+  action     String
+  entity     String
+  entityId   String
+  before     Json?
+  after      Json?
+  ip         String?
+  userAgent  String?
+  timestamp  DateTime @default(now())
+
+  employee Employee @relation(fields: [employeeId], references: [id])
+
+  @@index([entity, entityId])
+  @@index([employeeId, timestamp])
+}
+
+// ───────────────────────────────────────────────────
+// NEW ENTITIES
+// ───────────────────────────────────────────────────
+
+model Kit {
+  id          String     @id @default(cuid())
+  name        String
+  description String?
+  dispatches  Dispatch[]
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+}
+
+model CourierPartner {
+  id          String     @id @default(cuid())
+  name        String
+  trackingUrl String?
+  dispatches  Dispatch[]
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+}
+
+model TrackingEvent {
+  id         String   @id @default(cuid())
+  dispatchId String
+  status     String
+  location   String?
+  timestamp  DateTime @default(now())
+  dispatch   Dispatch @relation(fields: [dispatchId], references: [id])
+}
+
+model PaymentPlan {
+  id        String    @id @default(cuid())
+  name      String
+  students  Student[]
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+}
+
+model Course {
+  id        String    @id @default(cuid())
+  name      String
+  code      String    @unique
+  students  Student[]
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+}
+
+model Center {
+  id        String    @id @default(cuid())
+  name      String
+  code      String    @unique
+  city      String
+  state     String
+  students  Student[]
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+}
+
+model NotificationLog {
+  id        String   @id @default(cuid())
+  studentId String
+  type      String
+  channel   String // SMS, EMAIL, WHATSAPP
+  content   String
+  status    String // SENT, FAILED
+  timestamp DateTime @default(now())
+  student   Student  @relation(fields: [studentId], references: [id])
+}
+
+model Transfer {
+  id           String    @id @default(cuid())
+  studentId    String
+  fromCenterId String
+  toCenterId   String
+  status       String
+  requestDate  DateTime  @default(now())
+  approvalDate DateTime?
+  student      Student   @relation(fields: [studentId], references: [id])
+}
+
+model Session {
+  id         String   @id @default(cuid())
+  employeeId String
+  token      String   @unique
+  expiresAt  DateTime
+  createdAt  DateTime @default(now())
+  employee   Employee @relation(fields: [employeeId], references: [id])
+}
+
+enum DeliveryMode {
+  COURIER
+  IN_PERSON
+}

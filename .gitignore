@@ -1,0 +1,30 @@
+# Dependencies
+node_modules/
+
+# Environment Variables
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# Turborepo and Build outputs
+.turbo/
+dist/
+build/
+.next/
+out/
+coverage/
+
+# IDE and OS files
+.vscode/
+.idea/
+.DS_Store
+*.suo
+*.log
+
+# Project specific ignores (User defined)
+ELMS_Logistics_Developer_Blueprint.md
+pdf_content.txt
+ENTERPRISE LOGISTICS MANAGEMENT SYSTEM.pdf
+*.pdf
