@@ -60,13 +60,6 @@
   text-align: left;
   max-width: 100%;
 }
-.demo-banner {
-  padding: 8px 24px;
-  background: var(--soft);
-  color: var(--text);
-  font-size: 12px;
-  border-bottom: 1px solid var(--line);
-}
 :root {
   --navy: #292f2b;
   --teal: #49684f;
