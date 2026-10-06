@@ -1,30 +1,69 @@
-version: '3.8'
-
 services:
+  db:
+    image: postgres:18-alpine
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD}
+      POSTGRES_DB: elms_db
+    volumes:
+      - postgres_data:/var/lib/postgresql
+    healthcheck:
+      test: [CMD-SHELL, 'pg_isready -U postgres -d elms_db']
+      interval: 10s
+      timeout: 5s
+      retries: 10
+    restart: unless-stopped
   backend:
     build:
       context: .
       dockerfile: apps/backend/Dockerfile
-    ports:
-      - "3000:3000"
     environment:
-      - NODE_ENV=development
-    volumes:
-      - .:/app
-      - /app/node_modules
+      DATABASE_URL: postgresql://postgres:${POSTGRES_PASSWORD}@db:5432/elms_db?schema=public
+      JWT_ACCESS_SECRET: ${JWT_ACCESS_SECRET:?Set JWT_ACCESS_SECRET}
+      JWT_REFRESH_SECRET: ${JWT_REFRESH_SECRET:?Set JWT_REFRESH_SECRET}
+      FRONTEND_URL: ${FRONTEND_URL:?Set FRONTEND_URL}
+      ADMIN_EMAIL: ${ADMIN_EMAIL:-}
+      ADMIN_PASSWORD: ${ADMIN_PASSWORD:-}
+      ADMISSIONS_API_KEY: ${ADMISSIONS_API_KEY:-}
+      FINANCE_API_KEY: ${FINANCE_API_KEY:-}
+      SMTP_HOST: ${SMTP_HOST:-}
+      SMTP_PORT: ${SMTP_PORT:-587}
+      SMTP_FROM: ${SMTP_FROM:-}
+      SMTP_USER: ${SMTP_USER:-}
+      SMTP_PASSWORD: ${SMTP_PASSWORD:-}
+      TWILIO_ACCOUNT_SID: ${TWILIO_ACCOUNT_SID:-}
+      TWILIO_AUTH_TOKEN: ${TWILIO_AUTH_TOKEN:-}
+      TWILIO_FROM: ${TWILIO_FROM:-}
+      TWILIO_WHATSAPP_FROM: ${TWILIO_WHATSAPP_FROM:-}
+      NODE_ENV: production
     depends_on:
-      - db
-  
-  db:
-    image: postgres:15
-    ports:
-      - "5432:5432"
+      db:
+        condition: service_healthy
+    restart: unless-stopped
+  frontend:
+    build:
+      context: .
+      dockerfile: apps/frontend/Dockerfile
+      args:
+        API_INTERNAL_URL: http://backend:4000
     environment:
-      - POSTGRES_USER=postgres
-      - POSTGRES_PASSWORD=postgres
-      - POSTGRES_DB=logistic
+      API_INTERNAL_URL: http://backend:4000
+    depends_on:
+      - backend
+    restart: unless-stopped
+  proxy:
+    image: caddy:2-alpine
+    ports: ['80:80', '443:443']
+    environment:
+      ELMS_DOMAIN: ${ELMS_DOMAIN:?Set ELMS_DOMAIN}
     volumes:
-      - postgres_data:/var/lib/postgresql/data
-
+      - ./infra/Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    depends_on:
+      - frontend
+    restart: unless-stopped
 volumes:
   postgres_data:
+  caddy_data:
+  caddy_config:

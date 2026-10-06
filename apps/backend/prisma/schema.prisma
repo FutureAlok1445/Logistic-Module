@@ -13,14 +13,22 @@ datasource db {
 // EMPLOYEES (Internal ELMS Users)
 // ───────────────────────────────────────────────────
 model Employee {
-  id           String       @id @default(cuid())
-  email        String       @unique
-  passwordHash String
-  fullName     String
-  role         EmployeeRole
-  isActive     Boolean      @default(true)
-  createdAt    DateTime     @default(now())
-  updatedAt    DateTime     @updatedAt
+  id               String            @id @default(cuid())
+  email            String            @unique
+  passwordHash     String
+  fullName         String
+  role             EmployeeRole
+  isActive         Boolean           @default(true)
+  createdAt        DateTime          @default(now())
+  updatedAt        DateTime          @updatedAt
+  resets           PasswordReset[]
+  profile          EmployeeProfile?
+  workbooks        WorkbookDataset[]
+  sentMessages     TeamMessage[]     @relation("MessageSender")
+  receivedMessages TeamMessage[]     @relation("MessageRecipient")
+  assignedTasks    WorkTask[]        @relation("TaskAssignee")
+  createdTasks     WorkTask[]        @relation("TaskCreator")
+  files            EmployeeFile[]
 
   // Relations
   dispatches Dispatch[] @relation("CreatedBy")
@@ -38,27 +46,109 @@ enum EmployeeRole {
   VIEWER_AUDITOR
 }
 
+model EmployeeProfile {
+  employeeId    String   @id
+  employee      Employee @relation(fields: [employeeId], references: [id])
+  jobTitle      String   @default("")
+  department    String   @default("Logistics")
+  location      String   @default("")
+  phone         String   @default("")
+  bio           String   @default("")
+  availability  String   @default("AVAILABLE")
+  statusMessage String   @default("")
+  avatarFileId  String?
+  lastSeenAt    DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+}
+
+model TeamMessage {
+  id          String    @id @default(cuid())
+  senderId    String
+  sender      Employee  @relation("MessageSender", fields: [senderId], references: [id])
+  recipientId String?
+  recipient   Employee? @relation("MessageRecipient", fields: [recipientId], references: [id])
+  channel     String    @default("operations")
+  body        String
+  createdAt   DateTime  @default(now())
+  attachments EmployeeFile[]
+
+  @@index([channel, createdAt])
+  @@index([recipientId, createdAt])
+}
+
+model EmployeeFile {
+  id        String      @id @default(cuid())
+  ownerId   String
+  owner     Employee    @relation(fields: [ownerId], references: [id])
+  messageId String?
+  message   TeamMessage? @relation(fields: [messageId], references: [id], onDelete: Cascade)
+  kind      String
+  filename  String
+  mime      String
+  size      Int
+  content   Bytes
+  createdAt DateTime    @default(now())
+
+  @@index([ownerId, kind])
+  @@index([messageId])
+}
+
+model WorkTask {
+  id          String    @id @default(cuid())
+  title       String
+  description String    @default("")
+  priority    String    @default("NORMAL")
+  status      String    @default("TODO")
+  dueAt       DateTime?
+  reference   String    @default("")
+  assigneeId  String
+  assignee    Employee  @relation("TaskAssignee", fields: [assigneeId], references: [id])
+  creatorId   String
+  creator     Employee  @relation("TaskCreator", fields: [creatorId], references: [id])
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  @@index([assigneeId, status, dueAt])
+}
+
+model WorkbookDataset {
+  id        String   @id @default(cuid())
+  name      String
+  filename  String
+  ownerId   String
+  owner     Employee @relation(fields: [ownerId], references: [id])
+  sheets    Json
+  view      Json     @default("{}")
+  rowCount  Int
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([ownerId, createdAt])
+}
+
 // ───────────────────────────────────────────────────
 // STUDENTS
 // ───────────────────────────────────────────────────
 model Student {
-  id             String        @id
-  name           String
-  mobile         String
-  email          String?
-  address        String
-  city           String
-  state          String
-  pincode        String
-  courseId       String
-  centerId       String
-  batchId        String?
-  enrollmentDate DateTime
-  status         StudentStatus
-  paymentPlanId  String
-  notes          String?
-  importedAt     DateTime      @default(now())
-  updatedAt      DateTime      @updatedAt
+  id                String        @id
+  name              String
+  mobile            String
+  email             String?
+  address           String
+  city              String
+  state             String
+  pincode           String
+  courseId          String
+  centerId          String
+  batchId           String?
+  enrollmentDate    DateTime
+  status            StudentStatus
+  paymentPlanId     String
+  notes             String?
+  importedAt        DateTime      @default(now())
+  updatedAt         DateTime      @updatedAt
+  enrollmentVersion Int           @default(1)
+  completedAt       DateTime?
 
   course          Course            @relation(fields: [courseId], references: [id])
   center          Center            @relation(fields: [centerId], references: [id])
@@ -103,21 +193,28 @@ model MilestoneStatus {
 // DISPATCH
 // ───────────────────────────────────────────────────
 model Dispatch {
-  id               String         @id @default(cuid())
-  studentId        String
-  kitId            String
-  status           DispatchStatus
-  deliveryMode     DeliveryMode
-  courierPartnerId String?
-  awbNumber        String?
-  expectedDispatch DateTime?
-  expectedDelivery DateTime?
-  dispatchedAt     DateTime?
-  deliveredAt      DateTime?
-  createdById      String
-  overrideReason   String?
-  createdAt        DateTime       @default(now())
-  updatedAt        DateTime       @updatedAt
+  id                String         @id @default(cuid())
+  studentId         String
+  kitId             String
+  status            DispatchStatus
+  deliveryMode      DeliveryMode
+  courierPartnerId  String?
+  awbNumber         String?
+  expectedDispatch  DateTime?
+  expectedDelivery  DateTime?
+  dispatchedAt      DateTime?
+  deliveredAt       DateTime?
+  createdById       String
+  overrideReason    String?
+  createdAt         DateTime       @default(now())
+  updatedAt         DateTime       @updatedAt
+  enrollmentVersion Int            @default(1)
+  warehouseId       String?
+  packedItems       Json?
+  addressSnapshot   Json?
+  materialCost      Decimal        @default(0) @db.Decimal(10, 2)
+  approvedById      String?
+  returnRecord      ReturnRecord?
 
   student         Student         @relation(fields: [studentId], references: [id])
   kit             Kit             @relation(fields: [kitId], references: [id])
@@ -125,6 +222,8 @@ model Dispatch {
   createdBy       Employee        @relation("CreatedBy", fields: [createdById], references: [id])
   trackingHistory TrackingEvent[]
 
+  @@unique([studentId, kitId, enrollmentVersion])
+  @@unique([awbNumber])
   @@index([status, createdAt])
   @@index([studentId, status])
 }
@@ -169,21 +268,27 @@ model AuditLog {
 // ───────────────────────────────────────────────────
 
 model Kit {
-  id          String     @id @default(cuid())
-  name        String
-  description String?
-  dispatches  Dispatch[]
-  createdAt   DateTime   @default(now())
-  updatedAt   DateTime   @updatedAt
+  id              String     @id @default(cuid())
+  name            String
+  description     String?
+  dispatches      Dispatch[]
+  createdAt       DateTime   @default(now())
+  updatedAt       DateTime   @updatedAt
+  courseId        String?
+  milestoneNumber Int        @default(1)
+  weightKg        Decimal    @default(0) @db.Decimal(10, 3)
+  course          Course?    @relation(fields: [courseId], references: [id])
+  items           KitItem[]
 }
 
 model CourierPartner {
-  id          String     @id @default(cuid())
+  id          String        @id @default(cuid())
   name        String
   trackingUrl String?
   dispatches  Dispatch[]
-  createdAt   DateTime   @default(now())
-  updatedAt   DateTime   @updatedAt
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+  rules       CourierRule[]
 }
 
 model TrackingEvent {
@@ -191,6 +296,7 @@ model TrackingEvent {
   dispatchId String
   status     String
   location   String?
+  reason     String?
   timestamp  DateTime @default(now())
   dispatch   Dispatch @relation(fields: [dispatchId], references: [id])
 }
@@ -204,34 +310,46 @@ model PaymentPlan {
 }
 
 model Course {
-  id        String    @id @default(cuid())
+  id        String        @id @default(cuid())
   name      String
-  code      String    @unique
+  code      String        @unique
   students  Student[]
-  createdAt DateTime  @default(now())
-  updatedAt DateTime  @updatedAt
+  createdAt DateTime      @default(now())
+  updatedAt DateTime      @updatedAt
+  fee       Decimal       @default(0) @db.Decimal(12, 2)
+  kits      Kit[]
+  prices    CoursePrice[]
 }
 
 model Center {
-  id        String    @id @default(cuid())
+  id        String        @id @default(cuid())
   name      String
-  code      String    @unique
+  code      String        @unique
   city      String
   state     String
   students  Student[]
-  createdAt DateTime  @default(now())
-  updatedAt DateTime  @updatedAt
+  createdAt DateTime      @default(now())
+  updatedAt DateTime      @updatedAt
+  stocks    Stock[]
+  prices    CoursePrice[]
 }
 
 model NotificationLog {
-  id        String   @id @default(cuid())
-  studentId String
-  type      String
-  channel   String // SMS, EMAIL, WHATSAPP
-  content   String
-  status    String // SENT, FAILED
-  timestamp DateTime @default(now())
-  student   Student  @relation(fields: [studentId], references: [id])
+  id            String    @id @default(cuid())
+  studentId     String
+  type          String
+  channel       String // SMS, EMAIL, WHATSAPP
+  content       String
+  status        String // SENT, FAILED
+  timestamp     DateTime  @default(now())
+  attempts      Int       @default(0)
+  nextAttemptAt DateTime  @default(now())
+  error         String?
+  providerId    String?
+  sentAt        DateTime?
+  student       Student   @relation(fields: [studentId], references: [id])
+
+  @@index([status, nextAttemptAt])
 }
 
 model Transfer {
@@ -242,6 +360,16 @@ model Transfer {
   status       String
   requestDate  DateTime  @default(now())
   approvalDate DateTime?
+  fromCourseId String?
+  toCourseId   String?
+  amountPaid   Decimal   @default(0) @db.Decimal(12, 2)
+  materialCost Decimal   @default(0) @db.Decimal(12, 2)
+  usableCredit Decimal   @default(0) @db.Decimal(12, 2)
+  targetFee    Decimal   @default(0) @db.Decimal(12, 2)
+  balance      Decimal   @default(0) @db.Decimal(12, 2)
+  resolution   String?
+  reason       String?
+  approvedById String?
   student      Student   @relation(fields: [studentId], references: [id])
 }
 
@@ -251,10 +379,192 @@ model Session {
   token      String   @unique
   expiresAt  DateTime
   createdAt  DateTime @default(now())
+  userAgent  String?
   employee   Employee @relation(fields: [employeeId], references: [id])
 }
 
 enum DeliveryMode {
   COURIER
   IN_PERSON
+  SPEED_POST
+  CENTER_TO_CENTER
+}
+
+model PasswordReset {
+  id         String    @id @default(cuid())
+  employeeId String
+  tokenHash  String    @unique
+  expiresAt  DateTime
+  usedAt     DateTime?
+  employee   Employee  @relation(fields: [employeeId], references: [id])
+}
+
+model CoursePrice {
+  id       String  @id @default(cuid())
+  courseId String
+  centerId String
+  fee      Decimal @db.Decimal(12, 2)
+  course   Course  @relation(fields: [courseId], references: [id])
+  center   Center  @relation(fields: [centerId], references: [id])
+
+  @@unique([courseId, centerId])
+}
+
+model InventoryItem {
+  id                String          @id @default(cuid())
+  sku               String          @unique
+  name              String
+  pages             Int             @default(0)
+  unitCost          Decimal         @db.Decimal(10, 2)
+  lowStockThreshold Int             @default(10)
+  createdAt         DateTime        @default(now())
+  updatedAt         DateTime        @updatedAt
+  kitItems          KitItem[]
+  stocks            Stock[]
+  movements         StockMovement[]
+}
+
+model KitItem {
+  id       String        @id @default(cuid())
+  kitId    String
+  itemId   String
+  quantity Int
+  kit      Kit           @relation(fields: [kitId], references: [id])
+  item     InventoryItem @relation(fields: [itemId], references: [id])
+
+  @@unique([kitId, itemId])
+}
+
+model Stock {
+  id        String        @id @default(cuid())
+  itemId    String
+  centerId  String
+  quantity  Int           @default(0)
+  damaged   Int           @default(0)
+  updatedAt DateTime      @updatedAt
+  item      InventoryItem @relation(fields: [itemId], references: [id])
+  center    Center        @relation(fields: [centerId], references: [id])
+
+  @@unique([itemId, centerId])
+}
+
+model StockMovement {
+  id         String        @id @default(cuid())
+  itemId     String
+  centerId   String
+  quantity   Int
+  damaged    Int           @default(0)
+  reason     String
+  reference  String?
+  employeeId String
+  createdAt  DateTime      @default(now())
+  item       InventoryItem @relation(fields: [itemId], references: [id])
+
+  @@index([centerId, itemId, createdAt])
+}
+
+model CourierRule {
+  id               String         @id @default(cuid())
+  courierPartnerId String
+  state            String
+  priority         Int            @default(1)
+  courier          CourierPartner @relation(fields: [courierPartnerId], references: [id])
+
+  @@unique([state, priority])
+}
+
+model Pincode {
+  code        String   @id
+  city        String
+  state       String
+  serviceable Boolean  @default(true)
+  updatedAt   DateTime @updatedAt
+}
+
+model ReturnRecord {
+  id         String    @id @default(cuid())
+  dispatchId String    @unique
+  reason     String
+  condition  String?
+  status     String    @default("REQUESTED")
+  receivedAt DateTime?
+  createdAt  DateTime  @default(now())
+  dispatch   Dispatch  @relation(fields: [dispatchId], references: [id])
+}
+
+model CenterOrder {
+  id           String            @id @default(cuid())
+  fromCenterId String
+  toCenterId   String
+  status       String            @default("REQUESTED")
+  boxes        Int               @default(1)
+  awbNumber    String?
+  reason       String
+  createdById  String
+  createdAt    DateTime          @default(now())
+  receivedAt   DateTime?
+  lines        CenterOrderLine[]
+}
+
+model CenterOrderLine {
+  id               String      @id @default(cuid())
+  orderId          String
+  itemId           String
+  quantity         Int
+  receivedQuantity Int?
+  damagedQuantity  Int?
+  order            CenterOrder @relation(fields: [orderId], references: [id])
+
+  @@unique([orderId, itemId])
+}
+
+model PrintRequisition {
+  id          String                 @id @default(cuid())
+  vendor      String
+  centerId    String
+  status      String                 @default("ORDERED")
+  createdById String
+  createdAt   DateTime               @default(now())
+  lines       PrintRequisitionLine[]
+}
+
+model PrintRequisitionLine {
+  id               String           @id @default(cuid())
+  requisitionId    String
+  itemId           String
+  quantity         Int
+  receivedQuantity Int              @default(0)
+  unitCost         Decimal          @db.Decimal(10, 2)
+  requisition      PrintRequisition @relation(fields: [requisitionId], references: [id])
+
+  @@unique([requisitionId, itemId])
+}
+
+model NotificationTemplate {
+  event   String  @id
+  channel String  @default("SMS")
+  content String
+  enabled Boolean @default(true)
+}
+
+model IntegrationEvent {
+  id        String   @id
+  source    String
+  createdAt DateTime @default(now())
+}
+
+model ImportBatch {
+  id         String   @id @default(cuid())
+  employeeId String
+  kind       String
+  filename   String
+  rows       Json
+  status     String   @default("PREVIEW")
+  createdAt  DateTime @default(now())
+}
+
+model SystemSetting {
+  key       String   @id
+  value     Json
+  updatedAt DateTime @updatedAt
 }

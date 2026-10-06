@@ -1,74 +1,17 @@
+import 'dotenv/config';
 import { PrismaClient } from '@prisma/client';
+import { z } from 'zod';
+import bcrypt from 'bcryptjs';
 const prisma = new PrismaClient();
-
 async function main() {
-  // 1 Super Admin
-  const admin = await prisma.employee.upsert({
-    where: { email: 'admin@elms.logistics.local' },
-    update: {},
-    create: {
-      email: 'admin@elms.logistics.local',
-      passwordHash: 'seeded-hash', // use bcrypt in real life
-      fullName: 'Super Admin',
-      role: 'SUPER_ADMIN',
-    },
-  });
-
-  // 5 Courses
-  const courses = [
-    { code: 'C101', name: 'JEE Mains Master' },
-    { code: 'C102', name: 'NEET Vision' },
-    { code: 'C103', name: 'UPSC Foundation' },
-    { code: 'C104', name: 'GATE Prelude' },
-    { code: 'C105', name: 'CA FastTrack' },
-  ];
-  for (const c of courses) {
-    await prisma.course.upsert({
-      where: { code: c.code },
-      update: {},
-      create: c,
-    });
+  const existing = await prisma.employee.count({ where: { role: 'SUPER_ADMIN', isActive: true } });
+  if (!existing) {
+    const setup = z.object({ ADMIN_EMAIL: z.string().email(), ADMIN_PASSWORD: z.string().min(12), ADMIN_NAME: z.string().default('System Administrator') }).parse(process.env);
+    await prisma.employee.create({ data: { email: setup.ADMIN_EMAIL.toLowerCase(), passwordHash: await bcrypt.hash(setup.ADMIN_PASSWORD, 12), fullName: setup.ADMIN_NAME, role: 'SUPER_ADMIN' } });
   }
-
-  // 6 Centers
-  const centers = [
-    { code: 'DEL01', name: 'Delhi Hub', city: 'Delhi', state: 'Delhi' },
-    { code: 'MUM01', name: 'Mumbai Express', city: 'Mumbai', state: 'Maharashtra' },
-    { code: 'BLR01', name: 'Bangalore Tech', city: 'Bangalore', state: 'Karnataka' },
-    { code: 'HYD01', name: 'Hyderabad Spark', city: 'Hyderabad', state: 'Telangana' },
-    { code: 'CJB01', name: 'Coimbatore Rise', city: 'Coimbatore', state: 'Tamil Nadu' },
-    { code: 'KOL01', name: 'Kolkata Central', city: 'Kolkata', state: 'West Bengal' },
-  ];
-  for (const c of centers) {
-    await prisma.center.upsert({
-      where: { code: c.code },
-      update: {},
-      create: c,
-    });
-  }
-
-  // 3 Couriers
-  const couriers = [
-    { name: 'BlueDart', trackingUrl: 'https://bluedart.com/track?awb=' },
-    { name: 'Delhivery', trackingUrl: 'https://delhivery.com/track?awb=' },
-    { name: 'EcomExpress', trackingUrl: 'https://ecomexpress.in/track?awb=' }
-  ];
-  for (const c of couriers) {
-    // Upsert equivalent since we don't have unique constraint on name, we will just create
-    const existing = await prisma.courierPartner.findFirst({ where: { name: c.name } });
-    if (!existing) {
-      await prisma.courierPartner.create({ data: c });
-    }
-  }
-
-  console.log('Seeding completed successfully!');
+  const templates: Record<string, string> = { PACKED: 'Hi [Name], your [Course] [Kit] is packed and ready for dispatch.', HANDED_TO_COURIER: 'Your [Course] [Kit] is on its way. Courier: [Courier]. AWB: [AWB]. Estimated delivery: [Date].', OUT_FOR_DELIVERY: 'Hi [Name], your [Kit] is out for delivery today.', DELIVERED: 'Hi [Name], your [Course] [Kit] has been delivered.', FAILED_DELIVERY: 'Hi [Name], delivery of your [Kit] failed. Please contact your centre to confirm your address.', TRANSFER_CONFIRMED: 'Hi [Name], your transfer to [Course] is confirmed. Dispatch follows Finance clearance.' };
+  for (const [event, content] of Object.entries(templates)) await prisma.notificationTemplate.upsert({ where: { event }, create: { event, content }, update: {} });
+  for (const [key, value] of Object.entries({ forecastBufferPercent: 5, piiRetentionYears: 3 })) await prisma.systemSetting.upsert({ where: { key }, create: { key, value }, update: {} });
+  process.stdout.write('Bootstrap complete. Existing employee credentials and business records preserved.\n');
 }
-
-main()
-  .catch((e) => {
-    console.error(e);
-    process.exit(1);
-  })
-  .finally(async () => {
-    await prisma.$disconnect();
-  });
+main().catch(() => { process.stderr.write('Bootstrap failed. Set ADMIN_EMAIL and ADMIN_PASSWORD (12+ characters) when creating the first administrator.\n'); process.exitCode = 1; }).finally(() => prisma.$disconnect());

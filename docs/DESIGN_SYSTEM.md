@@ -1,0 +1,13 @@
+# Employee workspace design system
+
+The visual structure mirrors logistics operations: one persistent navigation rail, a clear dispatch priority strip, compact tables and explicit exception states. Colour conveys readiness and exceptions; it never replaces text.
+
+Tokens live in `src/app/globals.css`, `src/app/workspace-v2.css` and the current `src/app/editorial-workspace.css` layer. The latest requested editorial/wabi-sabi workspace uses ink navigation, botanical primary actions, warm paper data surfaces and stone surroundings. Bodoni Moda Variable headings and Manrope Variable controls/data are self-hosted through Fontsource packages with included licences. Warning and error states use labelled badges. Appearance supports light, dark and system preference. See `apps/frontend/DESIGN.md` for the direction contract.
+
+Compact operational tables retain tabular numerals. Spacing follows 4/8/12/16/20/24/32px steps. Borders define persistent data regions; elevation is reserved for transient controls. Worksheet tabs, configurable headers, multi-condition filters, interactive charts, profiles and pivot tables keep analytics inspectable. Mobile controls stack and data regions scroll horizontally without page overflow.
+
+Buttons distinguish primary mutation, secondary utility and text navigation. Forms use visible labels, native type constraints and server validation. Modal dialogs use the native dialog element for focus containment, Escape and return focus. Tables use semantic headers, selection labels and a horizontal overflow region. Resource pages provide search, filters, pagination, retry, empty guidance and success status. Dashboard charts include textual accessible descriptions.
+
+At 900px navigation becomes an overlay; at 640px headings/forms stack and chart grids collapse. Warehouse tables remain horizontally scrollable without page overflow. Focus indicators are explicit and reduced-motion disables animations. Private screens use noindex metadata. Accessibility remains a target requiring assistive-technology and cross-browser acceptance testing before release; browser verification is not a full WCAG certification.
+
+Desktop navigation collapses to an icon rail and retains labels through accessible link text/title. Hidden scrollbar preference only changes bar visibility. A single sheet-opening route transition, smooth sidebar width change, chart updates and transient-panel entrance supply motion; reduced-motion disables effects. Notification centre, source review, summary sharing, skeleton loading and recovery screens use the same typography and material language.

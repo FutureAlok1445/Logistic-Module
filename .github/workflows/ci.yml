@@ -1,0 +1,36 @@
+name: Validate ELMS
+on: [push, pull_request]
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:18
+        env:
+          POSTGRES_PASSWORD: integration-only
+          POSTGRES_DB: elms_ci
+        ports: ['5432:5432']
+        options: >-
+          --health-cmd "pg_isready -U postgres"
+          --health-interval 10s --health-timeout 5s --health-retries 5
+    env:
+      DATABASE_URL: postgresql://postgres:integration-only@localhost:5432/elms_ci?schema=public
+      JWT_ACCESS_SECRET: ci-integration-access-secret-32-characters
+      JWT_REFRESH_SECRET: ci-integration-refresh-secret-32-characters
+      FRONTEND_URL: http://localhost:3000
+      NODE_ENV: test
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - run: npx prisma generate --schema apps/backend/prisma/schema.prisma
+      - run: npm run lint
+      - run: npm run build
+      - run: npm test
+      - run: npm run test:demo
+      - run: npx playwright install --with-deps chromium
+      - run: npm run test:e2e
+      - run: npm audit --audit-level=moderate

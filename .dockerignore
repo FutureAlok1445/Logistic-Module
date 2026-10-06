@@ -1,0 +1,14 @@
+node_modules
+**/node_modules
+.git
+.turbo
+**/.next
+**/dist
+**/.env
+**/.env.*
+!**/.env.example
+LOCAL_ACCESS.md
+output
+test-results
+playwright-report
+dependency-audit.json

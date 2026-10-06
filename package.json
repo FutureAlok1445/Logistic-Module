@@ -7,7 +7,11 @@
     "build": "turbo build",
     "dev": "turbo dev",
     "lint": "turbo lint",
-    "test": "turbo test"
+    "test": "turbo test",
+    "test:integration": "npm run test:integration --workspace backend",
+    "test:e2e": "node scripts/run-e2e.cjs",
+    "test:demo": "node scripts/verify-demo.cjs",
+    "format": "prettier --write apps/backend/src apps/frontend/src apps/backend/test tests/browser docs"
   },
   "keywords": [],
   "author": "",
@@ -19,6 +23,8 @@
     "packages/*"
   ],
   "devDependencies": {
+    "@playwright/test": "^1.63.0",
+    "prettier": "^3.9.9",
     "turbo": "^2.9.16"
   }
 }

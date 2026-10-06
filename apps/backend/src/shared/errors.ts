@@ -1,29 +1,32 @@
 export class AppError extends Error {
-  constructor(
-    public message: string,
-    public statusCode: number = 500,
-    public code?: string
-  ) {
+  public statusCode: number;
+  public code: string;
+
+  constructor(statusCode: number, code: string, message: string) {
     super(message);
-    this.name = 'AppError';
+    this.statusCode = statusCode;
+    this.code = code;
+    this.name = "AppError";
+    // Ensure prototype chain is maintained for instanceof checks
+    Object.setPrototypeOf(this, AppError.prototype);
   }
 }
 
 export class BusinessRuleError extends AppError {
   constructor(rule: string, message: string) {
-    super(message, 422, rule);
-    this.name = 'BusinessRuleError';
+    super(422, rule, message);
+    this.name = "BusinessRuleError";
   }
 }
 
 export class NotFoundError extends AppError {
   constructor(entity: string) {
-    super(`${entity} not found`, 404, 'NOT_FOUND');
+    super(404, "NOT_FOUND", `${entity} not found`);
   }
 }
 
 export class ForbiddenError extends AppError {
-  constructor(message = 'Insufficient permissions') {
-    super(message, 403, 'FORBIDDEN');
+  constructor(message = "Insufficient permissions") {
+    super(403, "FORBIDDEN", message);
   }
 }
