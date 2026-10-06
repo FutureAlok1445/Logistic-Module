@@ -1,5 +1,17 @@
 {
   "$schema": "https://turbo.build/schema.json",
+  "globalPassThroughEnv": [
+    "DATABASE_URL",
+    "JWT_ACCESS_SECRET",
+    "JWT_REFRESH_SECRET",
+    "JWT_ACCESS_EXPIRY",
+    "JWT_REFRESH_EXPIRY",
+    "FRONTEND_URL",
+    "NODE_ENV",
+    "PORT",
+    "CI",
+    "API_HOST"
+  ],
   "tasks": {
     "build": {
       "dependsOn": ["^build"],

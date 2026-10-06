@@ -1,5 +1,11 @@
 import "dotenv/config";
 import { z } from "zod";
+
+const isTest =
+  process.env.NODE_ENV === "test" ||
+  process.env.npm_lifecycle_event === "test" ||
+  Boolean(process.env.TEST);
+
 const optionalText = z.preprocess(
   (value) => (value === "" ? undefined : value),
   z.string().optional(),
@@ -10,9 +16,26 @@ const optionalKey = z.preprocess(
 );
 
 const envSchema = z.object({
-  DATABASE_URL: z.string().url(),
-  JWT_ACCESS_SECRET: z.string().min(32),
-  JWT_REFRESH_SECRET: z.string().min(32),
+  DATABASE_URL: isTest
+    ? z
+        .string()
+        .url()
+        .default(
+          "postgresql://postgres:integration-only@localhost:5432/elms_ci?schema=public",
+        )
+    : z.string().url(),
+  JWT_ACCESS_SECRET: isTest
+    ? z
+        .string()
+        .min(32)
+        .default("ci-integration-access-secret-32-characters")
+    : z.string().min(32),
+  JWT_REFRESH_SECRET: isTest
+    ? z
+        .string()
+        .min(32)
+        .default("ci-integration-refresh-secret-32-characters")
+    : z.string().min(32),
   JWT_ACCESS_EXPIRY: z.string().default("15m"),
   JWT_REFRESH_EXPIRY: z.string().default("7d"),
   PORT: z.coerce.number().default(4000),
