@@ -20,7 +20,7 @@ async function run() {
       const combined = spawn(process.execPath, ['scripts/start-demo.cjs'], { cwd: path.resolve('../..'), env: { ...testEnv, NODE_ENV: 'production', PORT: '3000', DEMO_MODE: 'false', ADMIN_EMAIL: '', ADMIN_PASSWORD: '', API_INTERNAL_URL: 'http://127.0.0.1:4000' }, stdio: 'inherit' });
       try {
         for (let i = 0; i < 60; i++) { try { const r = await fetch('http://localhost:3000'); const api = await fetch('http://localhost:4000/ready'); if (r.ok && api.ok) break; } catch {} await new Promise(r => setTimeout(r, 500)); }
-        const e2e = spawnSync(process.execPath, [require.resolve('@playwright/test/cli'), 'test', '--config', 'playwright.config.ts'], { cwd: path.resolve('../..'), env: testEnv, stdio: 'inherit' });
+        const e2e = spawnSync(process.execPath, [require.resolve('@playwright/test/cli'), 'test', '--config', 'playwright.config.ts', ...(process.env.PLAYWRIGHT_GREP ? ['--grep', process.env.PLAYWRIGHT_GREP] : [])], { cwd: path.resolve('../..'), env: testEnv, stdio: 'inherit' });
         process.exitCode = e2e.status ?? 1;
       } finally {
         if (process.platform === 'win32') spawnSync('taskkill', ['/pid', String(combined.pid), '/T', '/F'], { stdio: 'ignore' });

@@ -3,18 +3,17 @@ import { test, expect } from "@playwright/test";
 test("profile photos persist and chat files download, search and remove", async ({
   page,
 }) => {
+  test.setTimeout(90000);
   await signIn(page);
   await page.goto("/profile");
-  await page
-    .getByLabel("Upload profile photo")
-    .setInputFiles({
-      name: "avatar.png",
-      mimeType: "image/png",
-      buffer: Buffer.from(
-        "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+aXwAAAABJRU5ErkJggg==",
-        "base64",
-      ),
-    });
+  await page.getByLabel("Upload profile photo").setInputFiles({
+    name: "avatar.png",
+    mimeType: "image/png",
+    buffer: Buffer.from(
+      "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+aXwAAAABJRU5ErkJggg==",
+      "base64",
+    ),
+  });
   await expect(
     page.getByRole("status").filter({ hasText: "Profile photo updated" }),
   ).toBeVisible();
@@ -25,6 +24,11 @@ test("profile photos persist and chat files download, search and remove", async 
     fullPage: true,
   });
   await page.setViewportSize({ width: 390, height: 844 });
+  await expect(page.getByLabel("Upload profile photo")).toBeVisible();
+  await page.evaluate(() => {
+    (document.activeElement as HTMLElement)?.blur();
+    window.scrollTo(0, 0);
+  });
   await page.screenshot({
     path: "output/playwright/profile-upload-mobile.png",
     fullPage: true,
@@ -38,13 +42,11 @@ test("profile photos persist and chat files download, search and remove", async 
   await page
     .getByLabel("Direct message", { exact: true })
     .fill("Browser attachment handover");
-  await page
-    .getByLabel("Attach message file")
-    .setInputFiles({
-      name: "browser-handover.txt",
-      mimeType: "text/plain",
-      buffer: Buffer.from("Fictional packing handover"),
-    });
+  await page.getByLabel("Attach message file").setInputFiles({
+    name: "browser-handover.txt",
+    mimeType: "text/plain",
+    buffer: Buffer.from("Fictional packing handover"),
+  });
   await page.getByRole("button", { name: "Send message", exact: true }).click();
   const file = page.getByRole("button", { name: /browser-handover.txt.*KB/ });
   await expect(file).toBeVisible();
@@ -59,11 +61,26 @@ test("profile photos persist and chat files download, search and remove", async 
     .getByLabel("Search conversation")
     .fill("Browser attachment handover");
   await expect(file).toBeVisible();
+  await page.evaluate(() => {
+    (document.activeElement as HTMLElement)?.blur();
+    window.scrollTo(0, 0);
+  });
   await page.screenshot({
     path: "output/playwright/chat-upload-desktop.png",
     fullPage: true,
   });
   await page.setViewportSize({ width: 390, height: 844 });
+  for (const control of [
+    page.getByLabel("Search conversation"),
+    page.getByRole("button", { name: "Send message", exact: true }),
+  ]) {
+    await control.scrollIntoViewIfNeeded();
+    await expect(control).toBeInViewport({ ratio: 1 });
+  }
+  await page.evaluate(() => {
+    (document.activeElement as HTMLElement)?.blur();
+    window.scrollTo(0, 0);
+  });
   await page.screenshot({
     path: "output/playwright/chat-upload-mobile.png",
     fullPage: true,

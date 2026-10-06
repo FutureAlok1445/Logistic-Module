@@ -13,3 +13,5 @@ Run staging trials with 50,000+ enrolments, realistic BOM sizes and one year of 
 No uptime, production load or backup-restore target is claimed from local verification. Availability requires hosted infrastructure and operational monitoring. The release checklist records the remaining external acceptance gates.
 
 The October 7 employee-file/demo verification used the same 50,004-student/500-packing probe on a busy local host: maximum dashboard 920 ms, atomic packing 9,561 ms. It remained within the document's local limits but shows substantial machine-load variability. These measurements do not predict Free Render/Neon performance; use a small fictional dataset for the manager demo.
+
+A subsequent focused confirmation on the same implementation measured maximum dashboard 79 ms and packing 976 ms. This variation reinforces that local timings depend on host load and do not certify hosted capacity.

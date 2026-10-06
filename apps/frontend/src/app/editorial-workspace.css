@@ -807,6 +807,9 @@ html:has(.quiet-scrollbars)::-webkit-scrollbar {
   color: var(--bg);
 }
 @media (max-width: 900px) {
+  .profile-summary {
+    display: block;
+  }
   .sidebar-toggle {
     display: none;
   }
@@ -837,6 +840,43 @@ html:has(.quiet-scrollbars)::-webkit-scrollbar {
   }
 }
 @media (max-width: 640px) {
+  .team-layout {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .team-directory,
+  .team-content,
+  .message-workspace,
+  .conversation-tools,
+  .message-compose {
+    min-width: 0;
+    max-width: 100%;
+  }
+  .conversation-tools input,
+  .message-compose textarea,
+  .team-directory > input {
+    width: 100%;
+    min-width: 0;
+  }
+  .team-directory .member-list,
+  .team-directory .channel-list,
+  .team-content > .workspace-tabs {
+    max-width: 100%;
+    overflow-x: auto;
+  }
+  .message-compose > div {
+    flex-wrap: wrap;
+    align-items: flex-start;
+  }
+  .message-compose > div:last-child {
+    flex-direction: column;
+  }
+  .message-compose > div:last-child .primary {
+    align-self: flex-end;
+  }
+  .compose-attachments {
+    flex-direction: column;
+    align-items: flex-start;
+  }
   .page-heading h1 {
     font-size: 36px;
   }
