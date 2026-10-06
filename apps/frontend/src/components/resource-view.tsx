@@ -199,7 +199,7 @@ export function Filters({
             aria-label="Search records"
             value={values.search ?? ""}
             onChange={(e) => onChange("search", e.target.value)}
-            placeholder="Search records…"
+            placeholder="Search by student, AWB, pincode, city…"
           />
         </label>
       )}
