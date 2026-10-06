@@ -731,7 +731,7 @@ html:has(.quiet-scrollbars)::-webkit-scrollbar {
 }
 .skeleton {
   border-radius: 7px;
-  background: #dedfd4;
+  background: var(--soft, #dedfd4);
   animation: quiet-pulse 1600ms ease-in-out infinite alternate;
 }
 .skeleton-heading {
@@ -749,6 +749,9 @@ html:has(.quiet-scrollbars)::-webkit-scrollbar {
   width: 100%;
 }
 @keyframes quiet-pulse {
+  from {
+    opacity: 0.85;
+  }
   to {
     opacity: 0.4;
   }
