@@ -308,12 +308,6 @@ export function Workspace({ module = "dashboard" }: { module?: string }) {
         </div>
       </aside>
       <div className="main-shell">
-        {process.env.NEXT_PUBLIC_DEMO_MODE === "true" && (
-          <div className="demo-banner">
-            Manager demo · use fictional data · sample workbook available in IMS
-            Excel
-          </div>
-        )}
         <header className="topbar">
           <div>
             <button
