@@ -1,7 +1,7 @@
-# One free service for the manager demo. PostgreSQL is supplied by Neon Free.
+# Full-Stack ELMS Logistics Service. PostgreSQL supplied by Neon.
 services:
   - type: web
-    name: ims-logistics-demo
+    name: ims-logistics
     runtime: node
     plan: free
     buildCommand: npm ci --include=dev && npx prisma generate --schema apps/backend/prisma/schema.prisma && npm run build
@@ -21,9 +21,9 @@ services:
       - key: JWT_REFRESH_SECRET
         generateValue: true
       - key: DEMO_MODE
-        value: "true"
+        value: "false"
       - key: NEXT_PUBLIC_DEMO_MODE
-        value: "true"
+        value: "false"
       - key: DEMO_PASSWORD
         sync: false
       - key: ADMIN_EMAIL

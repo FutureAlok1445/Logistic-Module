@@ -31,12 +31,7 @@ function serve(args, cwd, extra) {
 async function main() {
   const backend = path.join(root, 'apps/backend');
   await run([require.resolve('prisma/build/index.js'), 'migrate', 'deploy'], backend);
-  if (env.DEMO_MODE === 'true') {
-    await run([require.resolve('tsx/cli'), 'scripts/bootstrap-demo.ts'], backend);
-    await run([require.resolve('tsx/cli'), 'prisma/seed.ts'], backend);
-  } else if (env.ADMIN_EMAIL && env.ADMIN_PASSWORD) {
-    await run([require.resolve('tsx/cli'), 'prisma/seed.ts'], backend);
-  }
+  await run([require.resolve('tsx/cli'), 'prisma/seed.ts'], backend);
   serve(['dist/server.js'], backend, { PORT: '4000', API_HOST: '127.0.0.1', ADMIN_PASSWORD: '', DEMO_PASSWORD: '' });
   let ready = false;
   for (let i = 0; i < 60; i++) {
