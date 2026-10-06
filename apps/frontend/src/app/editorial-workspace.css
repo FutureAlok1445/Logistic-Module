@@ -354,7 +354,7 @@ thead th,
   background: var(--surface);
 }
 .main-content {
-  animation: open-sheet 320ms var(--ease) both;
+  animation: open-sheet 200ms cubic-bezier(0.16, 1, 0.3, 1) both;
 }
 .modal[open] {
   animation: open-dialog 260ms var(--ease) both;
@@ -372,14 +372,12 @@ thead th,
 }
 @keyframes open-sheet {
   from {
-    opacity: 0.65;
-    transform: translateY(7px);
-    clip-path: inset(0 0 1% 0);
+    opacity: 0.85;
+    transform: translateY(3px);
   }
   to {
     opacity: 1;
     transform: translateY(0);
-    clip-path: inset(0);
   }
 }
 @keyframes open-dialog {

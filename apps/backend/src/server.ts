@@ -16,9 +16,10 @@ async function main() {
   process.once("SIGTERM", shutdown);
   process.once("SIGINT", shutdown);
 }
-main().catch(() => {
+main().catch((err: unknown) => {
+  const details = err instanceof Error ? err.stack || err.message : String(err);
   process.stderr.write(
-    "ELMS startup failed. Check configuration and service availability.\n",
+    `ELMS startup failed: ${details}\nCheck configuration and service availability.\n`,
   );
   process.exit(1);
 });

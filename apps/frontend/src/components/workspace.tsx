@@ -47,7 +47,7 @@ import { request, label } from "../lib/client";
 import { NotificationInbox } from "./notification-inbox";
 const moduleLoading = () => (
   <div className="loading-block" role="status">
-    Opening employee tools…
+    Loading workspace view…
   </div>
 );
 const WorkbookStudio = dynamic(

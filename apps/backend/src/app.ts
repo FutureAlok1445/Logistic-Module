@@ -124,6 +124,7 @@ export async function buildApp() {
     app.log.error(
       {
         event: "REQUEST_FAILED",
+        err: error,
         errorType: error instanceof Error ? error.name : "Unknown",
       },
       "Request failed",

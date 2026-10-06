@@ -1,87 +1,187 @@
-# Enterprise Logistics Management System
+# Enterprise Logistics Management System (ELMS)
 
-ELMS is the internal logistics workspace for IMS Learning Resources. It enforces payment-aware dispatch, reconciles course transfers and tracks material movement across warehouse, courier and regional centres. There is no student portal or payment collection.
+ELMS is the internal enterprise logistics workspace for IMS Learning Resources. It enforces payment-aware dispatch, reconciles course transfers, and tracks educational material movements across warehouses, courier partners, and regional centres.
 
-Built with **Next.js App Router, Fastify, TypeScript, Prisma and PostgreSQL**. Browser credentials stay out of localStorage. Real database transactions govern inventory and shipment decisions.
+Built with **Next.js App Router, Fastify, TypeScript, Prisma, and PostgreSQL**.
 
-For a zero-cost manager demonstration, use [Render Free + Neon Free](docs/FREE_DEMO.md). The included `render.yaml` deploys one service with a free HTTPS URL, five demo roles and private fictional workbooks. No purchased domain or messaging API key is needed. Profile photos, bounded chat attachments and conversation search are included; database storage preserves uploads across free-host restarts.
+- **Security & Integrity**: Browser credentials stay out of `localStorage`. Real PostgreSQL database transactions govern all inventory deductions, shipments, and ledger entries.
+- **Zero-Cost Manager Demo**: Deployable on [Render Free + Neon Free](docs/FREE_DEMO.md) using the included `render.yaml` with five pre-configured demo roles, sample fictional workbooks, and persistent file attachments.
+- **Modern Editorial Workspace**: Responsive interface with self-hosted typography (Bodoni Moda & Manrope), dark/light mode support, persistent sidebar navigation, and seamless, instant client-side page transitions.
 
-## Implemented workflows
+---
 
-- Employee login, email recovery, password change, role-based access and immediate device-session revocation.
-- Read-only student and payment visibility, scoped Admissions/Finance ingestion and duplicate-event handling.
-- Payment-aware dispatch queue, verified postcode rules, bulk packing with atomic stock deduction, manager handover approval, unique AWB and shipment history.
-- BOM definitions and material catalogue, multi-location stock, inward/adjustment ledger and low-stock visibility.
-- Course/centre transfer requests, exact material-cost reconciliation, approval and authoritative enrolment synchronization.
-- Failed delivery retry/RTO, one-time returns reconciliation and unusable-stock separation.
-- Centre bulk orders, outward movement, inward confirmations and discrepancy detection.
-- Print demand, vendor requisitions, partial receipts and order reconciliation.
-- Durable SMS/WhatsApp outbox, editable templates, real Twilio adapter and visible provider-configuration failures.
-- CSV, XLS/XLSX, structured PDF and DOCX preview/import, column normalization, error rows and duplicate detection.
-- Live dashboard, search/filter/pagination, CSV/XLSX/PDF reporting, protected shipping manifests, audit history and account settings.
-- IMS Excel studio: private saved workbooks, sheet tabs, configurable headers, sortable/filterable columns, grouped charts, blank/duplicate analysis, saved views and audited exports. Live dispatch and student grids sit beside workbook analysis.
-- Employee profiles, manual availability, recent activity, internal channels, private direct messages, assigned tasks and exception desk.
-- Warehouse packing station with limited student identifiers and atomic material deductions; 100/500/1000 selection across dispatch pages.
-- Editorial/wabi-sabi workspace with self-hosted typography, collapsible navigation, smooth/reduced motion, configurable scrollbar visibility and recovery screens.
-- Analysis workbench: five interactive chart types, pivot summaries, field statistics, multi-condition filters, reviewed text/PDF/DOCX extraction and private insight sharing. Employee inbox includes eligible updates and assigned tasks.
+## 📋 Implemented Workflows & Features
 
-## Local setup
+- **Authentication & Sessions**: Employee authentication, password change, email recovery, role-based access control (RBAC), and immediate device-session revocation.
+- **Admissions & Finance Ingestion**: Read-only student and payment visibility, scoped Admissions/Finance ingestion endpoints, and idempotent event handling.
+- **Dispatch Operations**: Payment-aware dispatch queue, verified postcode rules, bulk packing with atomic stock deduction, manager handover approval, unique AWB generation, and complete shipment history.
+- **Inventory & BOM Management**: Bill of Materials (BOM) definitions, material catalogue, multi-location stock tracking, append-only inward/adjustment ledger, and low-stock indicators.
+- **Transfers & Reconciliations**: Course and regional centre transfer requests, exact material-cost reconciliation, approval workflows, and authoritative enrolment synchronization.
+- **Returns & Reverse Logistics**: Delivery retry/RTO handling, one-time returns reconciliation, and damaged/unusable stock separation.
+- **Centre Bulk Orders**: Outward branch shipments, inward arrival confirmations, and discrepancy tracking.
+- **Print Demand & Vendor Requisitions**: Forecasted material demand, vendor requisitions, partial receipts, and purchase order reconciliation.
+- **Messaging Outbox**: Durable SMS/WhatsApp notification queue, editable operational templates, live Twilio adapter, and visible provider configuration state.
+- **Document & Data Imports**: CSV, XLS/XLSX, structured PDF, and DOCX preview/import with column normalization, duplicate detection, and validation errors.
+- **Reporting & Auditing**: Live operational dashboard, search/filter/pagination, CSV/XLSX/PDF reporting, tamper-resistant shipping manifests, and system audit log.
+- **IMS Excel Studio**: Private saved workbooks, multi-sheet tabs, customizable headers, sortable/filterable columns, charts, duplicate analysis, saved views, and audited exports.
+- **Employee Hub & Communications**: Employee profiles, manual status/availability, internal channels, private direct messaging with secure file attachments, task management, and exception desk.
+- **Warehouse Packing Station**: Streamlined packing interface with limited student PII, barcode-ready workflows, atomic stock deduction, and 100/500/1000 bulk selection across dispatch batches.
+- **Analytics Workbench**: Five interactive chart visualizations, pivot summaries, field statistics, multi-condition filters, and private insight sharing.
 
-Requires Node.js 24, npm and PostgreSQL 15 or later (local verification used PostgreSQL 18). The database user running migrations needs extension-creation privileges for `pg_trgm`.
+---
+
+## 🏗️ Architecture & Project Structure
+
+The project is structured as a Turborepo monorepo:
+
+```
+Logistic-Module/
+├── apps/
+│   ├── backend/             # Fastify REST API, Prisma ORM, Auth, Business Logic
+│   │   ├── prisma/          # Schema, migrations, and seed scripts
+│   │   ├── src/             # Routes, services, middleware, and plugins
+│   │   └── test/            # Integration and unit tests
+│   └── frontend/            # Next.js App Router (React 19)
+│       ├── src/
+│       │   ├── app/         # App routes, global & editorial styling
+│       │   └── components/  # Workspace, dashboard, studio, and resource views
+│       └── scripts/         # Standalone build helpers
+├── packages/
+│   └── shared-types/        # Shared TypeScript contracts and interfaces
+├── tests/
+│   └── browser/             # Playwright end-to-end and workflow browser tests
+├── docs/                    # Architecture, PRD, Security, Performance, and Setup guides
+└── scripts/                 # Monorepo and E2E automation scripts
+```
+
+---
+
+## 🚀 Getting Started
+
+### Prerequisites
+
+- **Node.js**: Version 24+ recommended
+- **npm**: Version 10+
+- **PostgreSQL**: Version 15 or later (requires `pg_trgm` extension support)
+
+### 1. Installation
+
+Clone the repository and install dependencies:
 
 ```powershell
 npm ci
+```
+
+### 2. Environment Configuration
+
+Copy the example environment files for both apps:
+
+```powershell
 Copy-Item apps/backend/.env.example apps/backend/.env
 Copy-Item apps/frontend/.env.example apps/frontend/.env
-# Edit database URL, JWT secrets and first administrator credentials.
+```
+
+Ensure `apps/backend/.env` has your valid `DATABASE_URL` and secrets:
+
+```env
+DATABASE_URL="postgresql://postgres:password@localhost:5432/elms?schema=public"
+JWT_ACCESS_SECRET="your-access-secret"
+JWT_REFRESH_SECRET="your-refresh-secret"
+FRONTEND_URL="http://localhost:3000"
+PORT=4000
+```
+
+### 3. Database Migration & Seed
+
+Run database migrations and seed sample lookup and catalog data:
+
+```powershell
 npm run db:migrate --workspace backend
 npm run db:seed --workspace backend
+```
+
+> **Tip (Local First Admin)**: To generate a local administrator account without manual SQL entry, run:
+>
+> ```powershell
+> node apps/backend/scripts/bootstrap-local.cjs
+> ```
+>
+> Generated credentials are saved locally to `LOCAL_ACCESS.md` (which is git-ignored). To generate demo logins for all roles (Manager, Dispatch Executive, Warehouse Staff, Auditor), run `node apps/backend/scripts/create-role-logins.cjs`.
+
+### 4. Running the Development Server
+
+Start both backend (port 4000) and frontend (port 3000) concurrently:
+
+```powershell
 npm run dev
 ```
 
-Open [local ELMS](http://localhost:3000). API listens on port 4000; Next.js proxies `/api/v1` to it. For a local first administrator without choosing credentials, run `node scripts/bootstrap-local.cjs` from `apps/backend`, then seed. That helper writes generated credentials to ignored `LOCAL_ACCESS.md`; it refuses production use. Existing employee passwords and business records are preserved by seed.
+Visit **[http://localhost:3000](http://localhost:3000)** in your browser. Next.js automatically proxies API requests from `/api/v1` to the Fastify backend on port 4000.
 
-Configure centres, material items, course kits, courier partners/rules and verified serviceable postcodes. Send authoritative course fees/payment plans using Finance catalog ingestion, then student enrolments using Admissions and milestones using Finance. Operational tables intentionally start empty. Reconcile the queue after defining new kits or updating serviceability.
+---
 
-Run `node scripts/create-role-logins.cjs` from `apps/backend` for local Manager, Dispatch Executive, Warehouse Staff and Viewer/Auditor accounts. Generated passwords are recorded in ignored `LOCAL_ACCESS.md`. Existing accounts are preserved. This helper refuses production use.
+## 🧪 Testing & Verification
 
-## Build and verification
+Run the test suite across packages:
 
 ```powershell
+# Typechecking and linting
 npm run lint
+
+# Build all packages
 npm run build
-npm test
+
+# Fastify backend integration tests (runs isolated against a temporary database)
 npm run test:integration
+
+# Browser end-to-end tests with Playwright
 npx playwright install chromium
 npm run test:e2e
+
+# Security audit
 npm audit --audit-level=moderate
 ```
 
-Integration and browser runners create and destroy a randomly named temporary database. Their database account needs `CREATEDB`. They never reset the configured operational database. Browser tests start API/Next.js on ports 4000/3000, so stop local development servers before running them. Test fixture records live only in that temporary database.
+_Note: Integration and E2E runners create and teardown a temporary test database automatically, leaving your primary operational data intact._
 
-Production startup without Docker: `npm start --workspace backend` and `npm start --workspace frontend`, after migrations, bootstrap and builds. Run both under a process supervisor behind HTTPS. Use environment values for development, test, staging and production; never copy production secrets into test files.
+---
 
-## Configuration
+## ⚙️ Environment Variables Reference
 
-Required API values: `DATABASE_URL`, `JWT_ACCESS_SECRET`, `JWT_REFRESH_SECRET`, `FRONTEND_URL`. Defaults: `PORT=4000`, `NODE_ENV=development`, short access expiry and seven-day refresh expiry. First bootstrap: `ADMIN_EMAIL`, `ADMIN_PASSWORD`, optional `ADMIN_NAME`. Department integration: `ADMISSIONS_API_KEY`, `FINANCE_API_KEY`, optional `INTEGRATION_ACTOR_EMAIL`. Recovery: `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASSWORD`, `SMTP_FROM`. Messaging: `TWILIO_ACCOUNT_SID`, `TWILIO_AUTH_TOKEN`, `TWILIO_FROM`, `TWILIO_WHATSAPP_FROM`. Frontend: server-only `API_INTERNAL_URL`. Docker: root `.env` also needs `POSTGRES_PASSWORD`, `ELMS_DOMAIN` and HTTPS `FRONTEND_URL`.
+| Variable                | Scope    | Description                                                      |
+| ----------------------- | -------- | ---------------------------------------------------------------- |
+| `DATABASE_URL`          | Backend  | PostgreSQL connection string with `pg_trgm` capability           |
+| `PORT`                  | Backend  | API port (default: `4000`)                                       |
+| `NODE_ENV`              | Both     | `development`, `test`, or `production`                           |
+| `JWT_ACCESS_SECRET`     | Backend  | Secret used to sign short-lived JWT access tokens                |
+| `JWT_REFRESH_SECRET`    | Backend  | Secret used to sign rotating refresh tokens                      |
+| `FRONTEND_URL`          | Backend  | Permitted CORS and cookie origin (e.g., `http://localhost:3000`) |
+| `API_INTERNAL_URL`      | Frontend | Server-to-server API endpoint for Next.js SSR / proxies          |
+| `ADMISSIONS_API_KEY`    | Backend  | Secret key required for scoped Admissions ingest routes          |
+| `FINANCE_API_KEY`       | Backend  | Secret key required for scoped Finance payment ingest routes     |
+| `SMTP_*`                | Backend  | Optional SMTP configuration for password reset emails            |
+| `TWILIO_*`              | Backend  | Optional Twilio credentials for SMS and WhatsApp dispatch alerts |
+| `NEXT_PUBLIC_DEMO_MODE` | Frontend | Enables the demo banner when set to `"true"`                     |
 
-Optional provider variables may be omitted or empty. Templates and retention/print-buffer policy are stored in PostgreSQL; server credentials are never shown in settings.
+---
 
-## Documentation
+## 📖 Documentation Index
 
-- [Product requirements](docs/PRD.md)
-- [Architecture and data ownership](docs/ARCHITECTURE.md)
-- [API and ingestion contract](docs/API.md)
-- [Deployment and backup recovery](docs/DEPLOYMENT.md)
-- [Security review](docs/SECURITY_REVIEW.md)
-- [Performance review](docs/PERFORMANCE_REVIEW.md)
-- [Release verification](docs/RELEASE.md)
-- [Document coverage and employee workspace guide](docs/DOCUMENT_COVERAGE.md)
+- [Product Requirements Document (PRD)](docs/PRD.md)
+- [System Architecture & Data Ownership](docs/ARCHITECTURE.md)
+- [API Specification & Ingestion Contracts](docs/API.md)
+- [Deployment & Disaster Recovery](docs/DEPLOYMENT.md)
+- [Zero-Cost Demo Deployment Guide](docs/FREE_DEMO.md)
+- [Security Review](docs/SECURITY_REVIEW.md)
+- [Performance Review & Benchmarks](docs/PERFORMANCE_REVIEW.md)
+- [Design System & Editorial Workspace](docs/DESIGN_SYSTEM.md)
+- [Document Coverage & Employee Workspace Guide](docs/DOCUMENT_COVERAGE.md)
 
-Provider credentials, authoritative postcode coverage, production hosting and approved business policies were not supplied. Those must be configured and validated before live operations. Courier API tracking is explicitly future scope in the source document; manual tracking is implemented. Scanned PDF OCR is excluded. Local tests passed with 50,004 students and 500-shipment packing; they do not certify sustained production capacity, uptime or legal compliance.
+---
 
-## Development and troubleshooting
+## 🛠️ Operational Guidelines
 
-Add business rules to the service layer, validate HTTP payloads with Zod, and commit audit records in the same transaction. Never expose Finance/Admissions mutations to employee routes. Create additive Prisma migrations; do not reset operational data or edit applied migrations. Run critical transaction tests when changing stock, transfers or eligibility. Format source using `npm run format`.
-
-If login fails, check the bootstrap and API readiness; obsolete legacy sessions are intentionally revoked by the security migration. For request-origin errors, align `FRONTEND_URL` with the exact browser origin. For imports, split files over 1000 rows and use structured tables with recognized headers. A disabled packing action needs valid payment, verified serviceability and sufficient stock. Provider `WAITING_CONFIGURATION` is an actionable setup state, not a message-delivery success. Server error responses omit internal details; inspect safe server logs and readiness checks.
+1. **Transactional Integrity**: All stock deductions, dispatches, and material transfers must commit within an atomic database transaction. Never adjust stock or dispatches without recording an audit entry.
+2. **Ingestion Boundaries**: Only authorized Admissions and Finance services with valid API keys may ingest enrolments or fee payments. Operational users cannot manually invent student enrolments.
+3. **Data Privacy**: Student contact PII is protected and omitted from general warehouse and packing station views.
+4. **Code Quality**: Code must pass strict TypeScript checks (`tsc --noEmit`), ESLint rules, and Prettier formatting (`npm run format`).
