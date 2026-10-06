@@ -36,6 +36,21 @@ export const range = (q: Query) =>
     : undefined;
 export function dispatchWhere(q: Query): Prisma.DispatchWhereInput {
   if (q.status) z.enum(DispatchStatus).parse(q.status);
+  const searchFilter = q.search
+    ? {
+        OR: [
+          { awbNumber: { contains: q.search, mode: "insensitive" as const } },
+          { id: { contains: q.search, mode: "insensitive" as const } },
+          { student: { name: { contains: q.search, mode: "insensitive" as const } } },
+          { student: { id: { contains: q.search, mode: "insensitive" as const } } },
+          { student: { mobile: { contains: q.search } } },
+          { student: { pincode: { contains: q.search } } },
+          { student: { city: { contains: q.search, mode: "insensitive" as const } } },
+          { student: { state: { contains: q.search, mode: "insensitive" as const } } },
+        ],
+      }
+    : {};
+
   return {
     ...(q.status
       ? { status: q.status as Prisma.EnumDispatchStatusFilter }
@@ -43,18 +58,10 @@ export function dispatchWhere(q: Query): Prisma.DispatchWhereInput {
     createdAt: range(q),
     courierPartnerId: q.courierPartnerId || undefined,
     kitId: q.kitId || undefined,
+    ...searchFilter,
     student: {
       courseId: q.courseId || undefined,
       centerId: q.centerId || undefined,
-      ...(q.search
-        ? {
-            OR: [
-              { name: { contains: q.search, mode: "insensitive" } },
-              { id: { contains: q.search, mode: "insensitive" } },
-              { mobile: { contains: q.search } },
-            ],
-          }
-        : {}),
     },
   };
 }
@@ -161,7 +168,16 @@ export async function listResource(
             }
           : {}),
         ...(search
-          ? { OR: [{ id: search }, { name: search }, { mobile: search }] }
+          ? {
+              OR: [
+                { id: search },
+                { name: search },
+                { mobile: search },
+                { city: search },
+                { state: search },
+                { pincode: search },
+              ],
+            }
           : {}),
       };
       [rows, total] = await Promise.all([
